@@ -1,0 +1,131 @@
+﻿@page
+@model ASassn2_233104M.Pages.RegisterModel
+
+<h2 class="text-center">Register</h2>
+<form method="post" enctype="multipart/form-data" class="container mt-4 w-50">
+
+     <!-- Display validation error messages -->
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label class="form-label">Full Name</label>
+        <input asp-for="AppUser.FullName" class="form-control" type="text" required />
+        <span asp-validation-for="AppUser.FullName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Credit Card Number</label>
+        <input asp-for="AppUser.CreditCardNumber" class="form-control" type="text" required />
+        <span asp-validation-for="AppUser.CreditCardNumber" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Gender</label>
+        <select asp-for="AppUser.Gender" class="form-select">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+        <span asp-validation-for="AppUser.Gender" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Mobile Number</label>
+        <input asp-for="AppUser.MobileNo" class="form-control" type="text" required />
+        <span asp-validation-for="AppUser.MobileNo" class="text-danger"></span>
+
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Delivery Address</label>
+        <input asp-for="AppUser.DeliveryAddress" class="form-control" type="text" required />
+        <span asp-validation-for="AppUser.DeliveryAddress" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email Address</label>
+        <input asp-for="AppUser.Email" class="form-control" type="email" required />
+        <span asp-validation-for="AppUser.Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input asp-for="AppUser.Password" id="password" class="form-control" type="password" required onkeyup="validatePassword()" />
+        <span asp-validation-for="AppUser.Password" class="text-danger"></span>
+        <small id="password-feedback" class="text-muted">Enter a strong password</small>
+        <div class="progress mt-2">
+            <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">About Me</label>
+        <textarea asp-for="AppUser.AboutMe" class="form-control"></textarea>
+        <span asp-validation-for="AppUser.AboutMe" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Profile Photo (JPG only)</label>
+        <input asp-for="AppUser.Photo" class="form-control" type="file" accept=".jpg" />
+
+    </div>
+
+    <button type="submit" id="register-btn" class="btn btn-primary w-100">Register</button>
+</form>
+
+<script>
+    function validatePassword() {
+        var password = document.getElementById("password").value;
+        var feedback = document.getElementById("password-feedback");
+        var strengthBar = document.getElementById("password-strength-bar");
+        var button = document.getElementById("register-btn");
+
+        let errors = [];
+        let score = 0;
+
+        if (password.length >= 12) {
+            score++;
+        } else {
+            errors.push("At least 12 characters");
+        }
+
+        if (/[0-9]/.test(password)) {
+            score++;
+        } else {
+            errors.push("At least one number");
+        }
+
+        if (/[a-z]/.test(password)) {
+            score++;
+        } else {
+            errors.push("At least one lowercase letter");
+        }
+
+        if (/[A-Z]/.test(password)) {
+            score++;
+        } else {
+            errors.push("At least one uppercase letter");
+        }
+
+        if (/[^A-Za-z0-9]/.test(password)) {
+            score++;
+        } else {
+            errors.push("At least one special character");
+        }
+
+        let strengthLevels = ["Very Weak", "Weak", "Medium", "Strong", "Excellent"];
+        let colors = ["#dc3545", "#fd7e14", "#ffc107", "#17a2b8", "#28a745"];
+
+        // 🔹 Display Strength Level
+        feedback.innerHTML = `<b>Strength:</b> ${strengthLevels[score - 1] || "Very Weak"}<br>${errors.join("<br>")}`;
+        feedback.style.color = colors[score - 1] || "#dc3545";
+
+        // 🔹 Update Progress Bar
+        strengthBar.style.width = (score * 20) + "%";
+        strengthBar.classList.remove("bg-danger", "bg-warning", "bg-info", "bg-success");
+        strengthBar.classList.add(score < 3 ? "bg-danger" : score < 4 ? "bg-warning" : score < 5 ? "bg-info" : "bg-success");
+
+        // 🔹 Enable button only if Excellent password
+        button.disabled = score < 5;
+    }
+</script>

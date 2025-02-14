@@ -1,0 +1,36 @@
+﻿@page
+@model ASassn2_233104M.Pages.LoginModel
+
+<h2 class="text-center">Login</h2>
+<form method="post" class="container mt-4 w-50">
+    <div class="mb-3">
+        @Html.AntiForgeryToken()  <!-- Protects against CSRF attacks -->
+        <label class="form-label">Email</label>
+        <input asp-for="Email" class="form-control" type="email" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input asp-for="Password" class="form-control" type="password" required />
+    </div>
+
+    <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
+
+    <button type="submit" class="btn btn-primary w-100">Login</button>
+
+    <div class="mt-3 text-center">
+        <p>Don't have an account? <a asp-page="/Register">Register here</a></p>
+    </div>
+</form>
+
+<!-- Google reCAPTCHA v3 -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LfXjNYqAAAAAFpaFfWLn8arorOM5LCV4YvRUEYF"></script>
+    grecaptcha.ready(function () {
+        grecaptcha.execute('6LfXjNYqAAAAAFpaFfWLn8arorOM5LCV4YvRUEYF', { action: 'login' }).then(function (token) {
+            document.getElementById("g-recaptcha-response").value = token;
+        });
+    });
+</script>
+
+<!-- Add hidden input to store reCAPTCHA token -->
+<input type="hidden" id="g-recaptcha-response" name="RecaptchaResponse" />
