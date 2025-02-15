@@ -14,7 +14,7 @@
         <input asp-for="Password" class="form-control" type="password" required />
     </div>
 
-    <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
+    <input type="hidden" id="g-recaptcha-response" name="RecaptchaResponse" />
 
     <button type="submit" class="btn btn-primary w-100">Login</button>
 
@@ -25,12 +25,21 @@
 
 <!-- Google reCAPTCHA v3 -->
 <script src="https://www.google.com/recaptcha/api.js?render=6LfXjNYqAAAAAFpaFfWLn8arorOM5LCV4YvRUEYF"></script>
+<script>
+    function setRecaptchaResponse(event) {
+        event.preventDefault();  // Prevent form submission until reCAPTCHA is set
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6LfXjNYqAAAAAFpaFfWLn8arorOM5LCV4YvRUEYF', { action: 'login' }).then(function (token) {
+                document.getElementById("g-recaptcha-response").value = token;
+                event.target.submit();  // Now submit the form after setting the token
+            });
+        });
+    }
+
+    // Automatically execute on page load to ensure reCAPTCHA is triggered
     grecaptcha.ready(function () {
         grecaptcha.execute('6LfXjNYqAAAAAFpaFfWLn8arorOM5LCV4YvRUEYF', { action: 'login' }).then(function (token) {
             document.getElementById("g-recaptcha-response").value = token;
         });
     });
 </script>
-
-<!-- Add hidden input to store reCAPTCHA token -->
-<input type="hidden" id="g-recaptcha-response" name="RecaptchaResponse" />

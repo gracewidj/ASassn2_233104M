@@ -5,6 +5,39 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome, @Model.LoggedInUser.FullName</h1>
+    <p>Here are your details:</p>
+
+    <table class="table table-bordered">
+        <tr>
+            <th>Name</th>
+            <td>@Model.LoggedInUser.FullName</td>
+        </tr>
+        <tr>
+            <th>Gender</th>
+            <td>@Model.LoggedInUser.Gender</td>
+        </tr>
+        <tr>
+            <th>Mobile No</th>
+            <td>@Model.LoggedInUser.MobileNo</td>
+        </tr>
+        <tr>
+            <th>Delivery Address</th>
+            <td>@Model.LoggedInUser.DeliveryAddress</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>@Model.LoggedInUser.Email</td>
+        </tr>
+        <tr>
+            <th>Credit Card</th>
+            <td>************@Model.LoggedInUser.CreditCardNumber.Substring(Model.LoggedInUser.CreditCardNumber.Length - 4)</td>
+        </tr>
+        <tr>
+            <th>About Me</th>
+            <td>@Model.LoggedInUser.AboutMe</td>
+        </tr>
+    </table>
+
+    <p><a class="btn btn-primary" asp-page="/ChangePassword">Change Password</a></p>
 </div>

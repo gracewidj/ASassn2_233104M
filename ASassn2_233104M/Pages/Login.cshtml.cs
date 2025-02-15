@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -12,12 +13,19 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASassn2_233104M.Pages
 {
-    [ValidateAntiForgeryToken] // CSRF Protection
+
+
     public class LoginModel : PageModel
     {
+        public void OnGet()
+        {
+            Console.WriteLine("Login page loaded");
+        }
+
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
@@ -36,44 +44,60 @@ namespace ASassn2_233104M.Pages
         public string Password { get; set; }
 
         [BindProperty]
-        public string RecaptchaResponse { get; set; } // Captures reCAPTCHA response
+        public string RecaptchaResponse { get; set; }
 
+        private const int MaxFailedAttempts = 3;
+        private const int LockoutTimeMinutes = 15;
+
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> OnPostAsync()
         {
+            Console.WriteLine("Login function triggered" + RecaptchaResponse);
+
             if (!ModelState.IsValid)
                 return Page();
 
-            if (string.IsNullOrEmpty(RecaptchaResponse))
-            {
-                ModelState.AddModelError("", "reCAPTCHA response is missing.");
-                return Page();
-            }
+            Console.WriteLine($"RecaptchaResponse: {RecaptchaResponse}");
 
-            // Validate reCAPTCHA before login
-            bool isRecaptchaValid = await ValidateRecaptchaAsync(RecaptchaResponse);
-            if (!isRecaptchaValid)
-            {
-                LogAudit("Failed reCAPTCHA Validation", Email);
-                ModelState.AddModelError("", "reCAPTCHA verification failed. Please try again.");
-                return Page();
-            }
+            //if (string.IsNullOrEmpty(RecaptchaResponse))
+            //{
+            //    ModelState.AddModelError("", "reCAPTCHA response is missing.");
+            //    return Page();
+            //}
+
+            //// Validate reCAPTCHA before login
+            //bool isRecaptchaValid = await ValidateRecaptchaAsync(RecaptchaResponse);
+            //if (!isRecaptchaValid)
+            //{
+            //    LogAudit("Failed reCAPTCHA Validation", Email);
+            //    ModelState.AddModelError("", "reCAPTCHA verification failed. Please try again.");
+            //    return Page();
+            //}
 
             // Sanitize Email Input
             Email = Email.Trim().ToLower();
+
+            Console.WriteLine("🔹 Login Attempt: " + Email);
 
             var user = _context.Users.FirstOrDefault(u => u.Email == Email);
 
             if (user == null)
             {
                 LogAudit("Failed Login - User Not Found", Email);
+                Console.WriteLine("User Not Found in Database: " + Email);
                 ModelState.AddModelError("", "Invalid email or password.");
                 return Page();
+            }
+            else
+            {
+                Console.WriteLine($"User found: {user.Email}");
             }
 
             // Check if account is locked
             if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
             {
-                ModelState.AddModelError("", "Account is locked. Try again later.");
+                LogAudit("Failed Login - Account Locked", Email);
+                ModelState.AddModelError("", $"Your account is locked. Try again after {LockoutTimeMinutes} minutes.");
                 return Page();
             }
 
@@ -81,23 +105,49 @@ namespace ASassn2_233104M.Pages
             string hashedInputPassword = HashPassword(Password, user.PasswordSalt);
             if (hashedInputPassword != user.Password)
             {
+                // Handle failed login attempts
                 user.FailedLoginAttempts++;
-                if (user.FailedLoginAttempts >= 3)
+
+                if (user.FailedLoginAttempts >= MaxFailedAttempts)
                 {
-                    user.LockoutEnd = DateTime.UtcNow.AddMinutes(5); // Lock for 5 minutes
+                    user.LockoutEnd = DateTime.UtcNow.AddMinutes(LockoutTimeMinutes);
+                    _context.Entry(user).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+
+                    LogAudit("Account Locked Due to Failed Logins", Email);
+                    ModelState.AddModelError("", $"Your account is locked due to too many failed login attempts. Try again after {LockoutTimeMinutes} minutes.");
+                    return Page();
                 }
-                _context.SaveChanges();
+
+                _context.Entry(user).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
                 LogAudit("Failed Login - Incorrect Password", Email);
                 ModelState.AddModelError("", "Invalid email or password.");
                 return Page();
             }
 
-            // Reset failed login attempts
+            // Reset failed login attempts on successful login
             user.FailedLoginAttempts = 0;
+            user.LockoutEnd = null; 
+            user.SessionToken = Guid.NewGuid().ToString();
+            await _context.SaveChangesAsync();
+
+            // Check if the user is already logged in from another device
+            if (!string.IsNullOrEmpty(user.SessionToken))
+            {
+                Console.WriteLine("Existing session detected, logging out previous session.");
+
+                // Invalidate the existing session token in the database
+                user.SessionToken = null;
+                _context.SaveChanges();
+            }
+
+            // Generate a new session token for this login session
             user.SessionToken = Guid.NewGuid().ToString();
             _context.SaveChanges();
 
-            // Create secure session
+            // Store session in HttpContext
             HttpContext.Session.SetString("UserEmail", user.Email);
             HttpContext.Session.SetString("AuthToken", user.SessionToken);
             Response.Cookies.Append("AuthToken", user.SessionToken, new CookieOptions
@@ -112,7 +162,7 @@ namespace ASassn2_233104M.Pages
             return RedirectToPage("/Index");
         }
 
-        private string HashPassword(string password, string salt)
+            private string HashPassword(string password, string salt)
         {
             using (var rfc2898 = new Rfc2898DeriveBytes(password, Convert.FromBase64String(salt), 10000, HashAlgorithmName.SHA512))
             {

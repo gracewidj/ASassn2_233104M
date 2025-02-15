@@ -39,6 +39,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDistributedMemoryCache(); // Required for session storage
 builder.Services.AddSession(options =>
 {
+    //options.IdleTimeout = TimeSpan.FromMinutes(1);
     options.IdleTimeout = TimeSpan.FromMinutes(5); // Set session timeout to 5 minutes
     options.Cookie.HttpOnly = true; // Prevents JavaScript access
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Only allow HTTPS

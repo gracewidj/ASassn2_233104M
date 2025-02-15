@@ -40,11 +40,20 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-page="/Login">Login</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/ForgotPassword">Forgot Password?</a> <!-- 🔹 Added -->
+                            </li>
                         }
                         else
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark">Hello, @System.Net.WebUtility.HtmlEncode(userEmail)</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/ChangePassword">Change Password</a> <!-- 🔹 Add this -->
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/ResetPassword">Reset Password</a> <!-- 🔹 Reset Password (Optional) -->
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-page="/Logout">Logout</a>
@@ -71,5 +80,24 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="https://www.google.com/recaptcha/api.js?render='6LfXjNYqAAAAAFpaFfWLn8arorOM5LCV4YvRUEYF'"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        function checkSession() {
+            fetch('/SessionCheck')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.isActive) {
+                        window.location.href = "/Login"; // Redirect if session is inactive
+                    }
+                })
+                .catch(error => console.error('Error checking session:', error));
+        }
+
+        // Check session every 1 minute
+        // setInterval(checkSession, 60000);
+        // Check session every 5 minutes
+        setInterval(checkSession, 500000);
+    </script>
+
 </body>
 </html>

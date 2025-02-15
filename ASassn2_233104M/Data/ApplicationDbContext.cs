@@ -12,5 +12,6 @@ namespace ASassn2_233104M.Data
 
 		public DbSet<User> Users { get; set; }  // This defines the 'Users' table in your database
         public DbSet<AuditLog> AuditLogs { get; set; }
+
     }
 }
